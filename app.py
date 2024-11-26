@@ -4,47 +4,91 @@ import os
 import hashlib
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
-def create(url, json):
-    response = requests.put(url=url, json=json)
+
+def create_collection(url, collection_config):
+    response = requests.put(url=url, json=collection_config)
+    if response.status_code == 200:
+        print("Kolekcja została utworzona pomyślnie.")
+    else:
+        print(f"Błąd tworzenia kolekcji: {response.text}")
     return response.text
 
-def add(url, json):
-    response = requests.put(url=f"{url}/points", json=json)
+
+def add_points(url, json_data):
+    response = requests.put(url=f"{url}/points", json=json_data)
+    if response.status_code == 200:
+        print("Punkty zostały dodane pomyślnie.")
+    else:
+        print(f"Błąd dodawania punktów: {response.text}")
     return response.text
 
-def embed(input):
+
+def generate_embedding(client, text):
     response = client.embeddings.create(
-        input=input,
+        input=text,
         model="text-embedding-ada-002"
     )
     return response.data[0].embedding
 
-def indexing(linie, url):
-    for i in linie:
-        json = {"points": [{'id': hashlib.md5(i.encode()).hexdigest(), "payload":{'text': i}, "vector": embed(i)}]}
-        r = add(url=url, json=json)
-    return
 
-def search(url, query):
-    json = {"vector": embed(query),"limit": 1,"with_payload": True}
-    response = requests.post(url=f'{url}/points/search', json=json)
-    return response.text
+def index_data(lines, url, client):
+    for line in lines:
+        point_id = hashlib.md5(line.encode()).hexdigest()
+        vector = generate_embedding(client, line)
+        json_data = {
+            "points": [
+                {
+                    'id': point_id,
+                    "payload": {'text': line},
+                    "vector": vector
+                }
+            ]
+        }
+        add_points(url=url, json_data=json_data)
+
+
+def search_collection(url, query, client):
+    query_vector = generate_embedding(client, query)
+    search_payload = {
+        "vector": query_vector,
+        "limit": 1,
+        "with_payload": True
+    }
+    response = requests.post(url=f'{url}/points/search', json=search_payload)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(f"Błąd wyszukiwania: {response.text}")
+        return None
 
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-url = 'http://localhost:6333/collections/wiedza'
-vectors = {"vectors": {"size": 1536,"distance": "Cosine"}}
-create(url, vectors)
-
-with open('baza.txt', 'r', encoding='utf-8') as plik:
-    linie = plik.readlines()
+collection_url = 'http://localhost:6333/collections/wiedza'
 
 
-linie = [linia.strip() for linia in linie]
-indexing(linie, url)
+collection_config = {
+    "vectors": {
+        "size": 1536,
+        "distance": "Cosine"
+    }
+}
 
-pytanie = "jak ma na imie pies Adamsia?"
 
-print(search(url, pytanie))
+create_collection(collection_url, collection_config)
+
+
+with open('baza.txt', 'r', encoding='utf-8') as file:
+    lines = [line.strip() for line in file.readlines()]
+
+
+index_data(lines, collection_url, client)
+
+
+query = "jak ma na imię pies Adamsia?"
+result = search_collection(collection_url, query, client)
+
+
+print(result)
