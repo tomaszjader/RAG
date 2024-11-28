@@ -64,6 +64,22 @@ def search_collection(url, query, client):
         print(f"Błąd wyszukiwania: {response.text}")
         return None
 
+def search_collection_with_context(url, query, client):
+    query_vector = generate_embedding(client, query)
+    search_payload = {
+        "vector": query_vector,
+        "limit": 3,  # Pobierz więcej wyników, aby zwiększyć kontekst
+        "with_payload": True
+    }
+    response = requests.post(url=f'{url}/points/search', json=search_payload)
+    if response.status_code == 200:
+        results = response.json()
+        context = "\n".join([result['payload']['text'] for result in results['result']])
+        return context
+    else:
+        print(f"Błąd wyszukiwania: {response.text}")
+        return None
+
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 collection_url = 'http://localhost:6333/collections/wiedza'
@@ -77,7 +93,7 @@ collection_config = {
 }
 
 
-create_collection(collection_url, collection_config)
+
 
 
 with open('baza.txt', 'r', encoding='utf-8') as file:
@@ -87,8 +103,12 @@ with open('baza.txt', 'r', encoding='utf-8') as file:
 index_data(lines, collection_url, client)
 
 
+create_collection(collection_url, collection_config)
 query = "jak ma na imię pies Adamsia?"
-result = search_collection(collection_url, query, client)
+context = search_collection_with_context(collection_url, query, client)
 
-
-print(result)
+if context:
+    answer = generate_answer_with_context(client, query, context)
+    print("Odpowiedź z generacją:", answer)
+else:
+    print("Nie znaleziono odpowiedniego kontekstu.")
