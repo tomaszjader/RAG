@@ -99,16 +99,17 @@ collection_config = {
 with open('baza.txt', 'r', encoding='utf-8') as file:
     lines = [line.strip() for line in file.readlines()]
 
-
+create_collection(collection_url, collection_config)
 index_data(lines, collection_url, client)
 
 
-create_collection(collection_url, collection_config)
-query = "jak ma na imię pies Adamsia?"
+
+query = "W raporcie, z którego dnia znajduje się wzmianka o kradzieży prototypu broni?"
 context = search_collection_with_context(collection_url, query, client)
 
 if context:
-    answer = generate_answer_with_context(client, query, context)
+    # answer = generate_answer_with_context(client, query, context)
+    answer = search_collection(collection_url, query, client)
     print("Odpowiedź z generacją:", answer)
 else:
     print("Nie znaleziono odpowiedniego kontekstu.")
