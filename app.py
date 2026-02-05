@@ -81,6 +81,19 @@ def search_collection_with_context(url, query, client):
         return None
 
 
+def generate_answer_with_context(client, query, context):
+    messages = [
+        {"role": "system", "content": "Jesteś pomocnym asystentem. Odpowiedz na pytanie użytkownika na podstawie dostarczonego kontekstu."},
+        {"role": "user", "content": f"Kontekst:\n{context}\n\nPytanie: {query}"}
+    ]
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=messages
+    )
+    return response.choices[0].message.content
+
+
+
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 collection_url = 'http://localhost:6333/collections/wiedza'
 
@@ -99,17 +112,21 @@ collection_config = {
 with open('baza.txt', 'r', encoding='utf-8') as file:
     lines = [line.strip() for line in file.readlines()]
 
-create_collection(collection_url, collection_config)
-index_data(lines, collection_url, client)
 
+try:
+    create_collection(collection_url, collection_config)
+    index_data(lines, collection_url, client)
+    
+    query = "W raporcie, z którego dnia znajduje się wzmianka o kradzieży prototypu broni?"
+    context = search_collection_with_context(collection_url, query, client)
 
+    if context:
+        answer = generate_answer_with_context(client, query, context)
+        print("Odpowiedź z generacją:", answer)
+    else:
+        print("Nie znaleziono odpowiedniego kontekstu.")
 
-query = "W raporcie, z którego dnia znajduje się wzmianka o kradzieży prototypu broni?"
-context = search_collection_with_context(collection_url, query, client)
+except requests.exceptions.RequestException as e:
+    print(f"Błąd połączenia z bazą danych (Qdrant): {e}")
+    print("Upewnij się, że Qdrant działa na localhost:6333 (docker run -p 6333:6333 qdrant/qdrant)")
 
-if context:
-    # answer = generate_answer_with_context(client, query, context)
-    answer = search_collection(collection_url, query, client)
-    print("Odpowiedź z generacją:", answer)
-else:
-    print("Nie znaleziono odpowiedniego kontekstu.")
