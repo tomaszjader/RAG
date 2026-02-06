@@ -1,16 +1,20 @@
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
-from app import generate_answer_with_context
+from app import generate_answer_with_context, search_collection_with_context
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+collection_url = 'http://localhost:6333/collections/wiedza'
 
-query = "W raporcie, z którego dnia znajduje się wzmianka o kradzieży prototypu broni?"
-context = "W raporcie z dnia 12 stycznia 2024 roku odnotowano kradzież prototypu broni."
+query = "Jak nazwa się asystent poranka?"
+print("Searching for context in vector database...")
+context = search_collection_with_context(collection_url, query, client)
 
-print("Testing generation with hardcoded context...")
-answer = generate_answer_with_context(client, query, context)
-print(f"Query: {query}")
-print(f"Context: {context}")
-print(f"Generated Answer: {answer}")
+if context:
+    print(f"Query: {query}")
+    print(f"Context found: {context}")
+    answer = generate_answer_with_context(client, query, context)
+    print(f"Generated Answer: {answer}")
+else:
+    print("No context found in logic.")

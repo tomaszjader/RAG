@@ -94,39 +94,34 @@ def generate_answer_with_context(client, query, context):
 
 
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-collection_url = 'http://localhost:6333/collections/wiedza'
+if __name__ == "__main__":
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    collection_url = 'http://localhost:6333/collections/wiedza'
 
-
-collection_config = {
-    "vectors": {
-        "size": 1536,
-        "distance": "Cosine"
+    collection_config = {
+        "vectors": {
+            "size": 1536,
+            "distance": "Cosine"
+        }
     }
-}
 
+    with open('baza.txt', 'r', encoding='utf-8') as file:
+        lines = [line.strip() for line in file.readlines()]
 
+    try:
+        create_collection(collection_url, collection_config)
+        index_data(lines, collection_url, client)
+        
+        query = "Jak nazwa się asystent poranka?"
+        context = search_collection_with_context(collection_url, query, client)
 
+        if context:
+            answer = generate_answer_with_context(client, query, context)
+            print("Odpowiedź z generacją:", answer)
+        else:
+            print("Nie znaleziono odpowiedniego kontekstu.")
 
-
-with open('baza.txt', 'r', encoding='utf-8') as file:
-    lines = [line.strip() for line in file.readlines()]
-
-
-try:
-    create_collection(collection_url, collection_config)
-    index_data(lines, collection_url, client)
-    
-    query = "W raporcie, z którego dnia znajduje się wzmianka o kradzieży prototypu broni?"
-    context = search_collection_with_context(collection_url, query, client)
-
-    if context:
-        answer = generate_answer_with_context(client, query, context)
-        print("Odpowiedź z generacją:", answer)
-    else:
-        print("Nie znaleziono odpowiedniego kontekstu.")
-
-except requests.exceptions.RequestException as e:
-    print(f"Błąd połączenia z bazą danych (Qdrant): {e}")
-    print("Upewnij się, że Qdrant działa na localhost:6333 (docker run -p 6333:6333 qdrant/qdrant)")
+    except requests.exceptions.RequestException as e:
+        print(f"Błąd połączenia z bazą danych (Qdrant): {e}")
+        print("Upewnij się, że Qdrant działa na localhost:6333 (docker run -p 6333:6333 qdrant/qdrant)")
 
