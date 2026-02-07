@@ -1,8 +1,8 @@
 # RAG
 
-The application leverages the Retrieval-Augmented Generation (RAG) approach, integrating Quadratic technology for data management and the OpenAI API for generating natural language responses. The project allows users to upload and process documents, index information, and perform efficient database searches with intelligent AI assistance.
+Aplikacja wykorzystuje podejście Retrieval-Augmented Generation (RAG), integrując technologię Qdrant do zarządzania danymi oraz API OpenAI do generowania odpowiedzi w języku naturalnym. Projekt umożliwia przesyłanie i przetwarzanie dokumentów, indeksowanie informacji oraz wykonywanie wydajnych przeszukiwań bazy danych z inteligentnym wsparciem AI.
 
-## Wymagania wstępne (Prerequisites)
+## Wymagania wstępne
 
 Zanim zaczniesz, upewnij się, że masz zainstalowane następujące narzędzia:
 
@@ -11,7 +11,7 @@ Zanim zaczniesz, upewnij się, że masz zainstalowane następujące narzędzia:
     *   **Windows/Mac**: Zainstaluj [Docker Desktop](https://www.docker.com/products/docker-desktop/).
     *   **Linux**: Zainstaluj Docker Engine zgodnie z instrukcją dla Twojej dystrybucji.
 
-## Instalacja (Installation)
+## Instalacja
 
 1.  **Sklonuj repozytorium** (jeśli jeszcze tego nie zrobiłeś):
     ```bash
@@ -67,7 +67,9 @@ Aplikacja wymaga działającej instancji bazy Qdrant. Użyjemy do tego Dockera.
     docker run -d -p 6333:6333 -p 6334:6334 qdrant/qdrant
     ```
 
-2.  **Uruchom aplikację**:
+## Uruchomienie aplikacji
+
+1.  **Uruchom skrypt główny**:
     ```bash
     python app.py
     ```
